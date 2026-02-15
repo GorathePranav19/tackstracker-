@@ -4,8 +4,9 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && node server.js
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,8 +20,9 @@ services:
     env: static
     region: oregon
     plan: free
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/build
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
     envVars:
       - key: REACT_APP_API_URL
         value: https://team-tracker-backend.onrender.com/api
