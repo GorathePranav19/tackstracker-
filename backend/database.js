@@ -138,9 +138,22 @@ async function initializeDatabase() {
 // Initialize database on startup
 initializeDatabase().catch(console.error);
 
+// Helper function to convert SQLite placeholders (?) to PostgreSQL ($1, $2, etc.)
+function convertPlaceholders(sql) {
+  let index = 1;
+  return sql.replace(/\?/g, () => `$${index++}`);
+}
+
 // Helper function to run queries with promises
 async function runQuery(sql, params = []) {
-  const result = await pool.query(sql, params);
+  let pgSql = convertPlaceholders(sql);
+
+  // Add RETURNING id for INSERT statements if not already present
+  if (pgSql.trim().toUpperCase().startsWith('INSERT') && !pgSql.toUpperCase().includes('RETURNING')) {
+    pgSql = pgSql + ' RETURNING id';
+  }
+
+  const result = await pool.query(pgSql, params);
   return {
     id: result.rows[0]?.id,
     changes: result.rowCount
@@ -149,13 +162,15 @@ async function runQuery(sql, params = []) {
 
 // Helper function to get single row
 async function getOne(sql, params = []) {
-  const result = await pool.query(sql, params);
+  const pgSql = convertPlaceholders(sql);
+  const result = await pool.query(pgSql, params);
   return result.rows[0];
 }
 
 // Helper function to get all rows
 async function getAll(sql, params = []) {
-  const result = await pool.query(sql, params);
+  const pgSql = convertPlaceholders(sql);
+  const result = await pool.query(pgSql, params);
   return result.rows;
 }
 
@@ -165,3 +180,4 @@ module.exports = {
   getOne,
   getAll
 };
+
