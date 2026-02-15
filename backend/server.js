@@ -719,6 +719,96 @@ cron.schedule('0 18 * * *', async () => {
 });
 
 // ============================================
+// DATABASE SEEDING ENDPOINT
+// ============================================
+
+app.post('/api/seed', async (req, res) => {
+    try {
+        console.log('🌱 Starting database seeding...');
+
+        // Create demo user
+        const hashedPassword = await bcrypt.hash('demo123', 10);
+        const userResult = await runQuery(
+            'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?) RETURNING id',
+            ['Demo User', 'demo@example.com', hashedPassword, 'admin']
+        );
+        const userId = userResult.id;
+
+        // Create quarterly goals
+        const goal1 = await runQuery(
+            'INSERT INTO quarterly_goals (user_id, title, description, quarter, year, status, progress) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
+            [userId, 'Launch Product V2.0', 'Complete redesign and launch of our flagship product with new features', 1, 2026, 'in_progress', 65]
+        );
+
+        const goal2 = await runQuery(
+            'INSERT INTO quarterly_goals (user_id, title, description, quarter, year, status, progress) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id',
+            [userId, 'Improve Team Productivity', 'Implement new tools and processes to boost team efficiency by 30%', 1, 2026, 'in_progress', 45]
+        );
+
+        // Create monthly plans
+        const plan1 = await runQuery(
+            'INSERT INTO monthly_plans (user_id, quarterly_goal_id, title, description, month, year, status, progress) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+            [userId, goal1.id, 'Backend API Development', 'Build new REST API endpoints and database schema', 3, 2026, 'in_progress', 70]
+        );
+
+        const plan2 = await runQuery(
+            'INSERT INTO monthly_plans (user_id, quarterly_goal_id, title, description, month, year, status, progress) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id',
+            [userId, goal2.id, 'Implement Project Management Tool', 'Set up and train team on new PM software', 2, 2026, 'in_progress', 60]
+        );
+
+        // Create weekly tasks
+        await runQuery(
+            'INSERT INTO weekly_tasks (user_id, monthly_plan_id, title, description, week_number, year, priority, status, estimated_hours, actual_hours, due_date, is_urgent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [userId, plan1.id, 'Design database schema', 'Create ERD and define all tables and relationships', 10, 2026, 'high', 'completed', 8, 10, '2026-03-07', 0]
+        );
+
+        await runQuery(
+            'INSERT INTO weekly_tasks (user_id, monthly_plan_id, title, description, week_number, year, priority, status, estimated_hours, actual_hours, due_date, is_urgent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [userId, plan1.id, 'Implement authentication endpoints', 'Build login, register, and JWT token management', 11, 2026, 'high', 'completed', 12, 14, '2026-03-14', 0]
+        );
+
+        await runQuery(
+            'INSERT INTO weekly_tasks (user_id, monthly_plan_id, title, description, week_number, year, priority, status, estimated_hours, actual_hours, due_date, is_urgent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [userId, plan1.id, 'Create CRUD endpoints for goals', 'Build API endpoints for quarterly goals management', 12, 2026, 'medium', 'in_progress', 10, 6, '2026-03-21', 1]
+        );
+
+        await runQuery(
+            'INSERT INTO weekly_tasks (user_id, monthly_plan_id, title, description, week_number, year, priority, status, estimated_hours, actual_hours, due_date, is_urgent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [userId, plan2.id, 'Research PM tools', 'Evaluate top 5 project management tools', 9, 2026, 'high', 'completed', 4, 5, '2026-02-28', 0]
+        );
+
+        await runQuery(
+            'INSERT INTO weekly_tasks (user_id, monthly_plan_id, title, description, week_number, year, priority, status, estimated_hours, actual_hours, due_date, is_urgent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [userId, plan2.id, 'Train team members', 'Conduct training sessions for all team members', 11, 2026, 'medium', 'in_progress', 8, 4, '2026-03-14', 0]
+        );
+
+        // Create notifications
+        await runQuery(
+            'INSERT INTO notifications (user_id, type, title, message, is_read) VALUES (?, ?, ?, ?, ?)',
+            [userId, 'reminder', 'Task Due Soon', 'Task "Create CRUD endpoints for goals" is due in 3 days', 0]
+        );
+
+        await runQuery(
+            'INSERT INTO notifications (user_id, type, title, message, is_read) VALUES (?, ?, ?, ?, ?)',
+            [userId, 'general', 'Welcome!', 'Welcome to Team Goal Tracker! Your demo data has been loaded.', 1]
+        );
+
+        console.log('✅ Database seeded successfully');
+
+        res.json({
+            message: 'Database seeded successfully',
+            credentials: {
+                email: 'demo@example.com',
+                password: 'demo123'
+            }
+        });
+    } catch (error) {
+        console.error('Seeding error:', error);
+        res.status(500).json({ error: 'Failed to seed database', details: error.message });
+    }
+});
+
+// ============================================
 // SERVER START
 // ============================================
 
