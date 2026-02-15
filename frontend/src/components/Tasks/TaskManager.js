@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { tasksAPI, plansAPI, timeLogsAPI } from '../../services/api';
-import { Plus, Edit2, Trash2, CheckSquare, Clock, AlertCircle, Link as LinkIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckSquare, Clock, Link as LinkIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 function TaskManager({ onUpdate }) {
@@ -33,6 +33,7 @@ function TaskManager({ onUpdate }) {
     useEffect(() => {
         fetchTasks();
         fetchPlans();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filterStatus]);
 
     const fetchTasks = async () => {

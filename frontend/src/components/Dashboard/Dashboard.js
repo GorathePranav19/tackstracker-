@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { dashboardAPI, goalsAPI, plansAPI, tasksAPI } from '../../services/api';
+import { dashboardAPI } from '../../services/api';
 import {
     Target,
     Calendar,
     CheckCircle,
     Clock,
-    AlertCircle,
-    TrendingUp,
-    Users
+    AlertCircle
 } from 'lucide-react';
 import {
     BarChart,
