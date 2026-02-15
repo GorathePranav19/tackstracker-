@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key-change-in-produ
 
 // Middleware
 app.use(cors({
-    origin: ['https://tackstracker.vercel.app', 'http://localhost:3000'],
+    origin: true, // Allow all origins temporarily
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
