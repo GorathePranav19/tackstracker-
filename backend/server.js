@@ -4,20 +4,122 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cron = require('node-cron');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const Sentry = require('@sentry/node');
 const { runQuery, getOne, getAll } = require('./database');
+const {
+    goalSchema,
+    planSchema,
+    taskSchema,
+    timeLogSchema,
+    registerSchema,
+    loginSchema,
+    validate
+} = require('./middleware/validation');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'default-secret-key-change-in-production';
 
-// Middleware
-app.use(cors({
-    origin: true, // Allow all origins temporarily
+// ============================================
+// SENTRY INITIALIZATION
+// ============================================
+if (process.env.SENTRY_DSN) {
+    Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+        environment: process.env.NODE_ENV || 'development',
+        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+    });
+    console.log('✅ Sentry error tracking initialized');
+}
+
+// ============================================
+// ENVIRONMENT VALIDATION
+// ============================================
+const requiredEnvVars = ['JWT_SECRET', 'POSTGRES_URL'];
+const missing = requiredEnvVars.filter(v => !process.env[v]);
+
+if (missing.length > 0) {
+    console.error(`❌ Missing required environment variables: ${missing.join(', ')}`);
+    console.error('⚠️  Please check your .env file');
+    // Don't exit in production to allow deployment, but warn
+    if (process.env.NODE_ENV !== 'production') {
+        process.exit(1);
+    }
+}
+
+// ============================================
+// SECURITY MIDDLEWARE
+// ============================================
+
+// Helmet for security headers
+app.use(helmet());
+
+// Additional security headers
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+});
+
+// General API rate limiter
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Stricter limiter for auth endpoints
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // only 5 login attempts per 15 minutes
+    message: 'Too many login attempts, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// ============================================
+// CORS CONFIGURATION
+// ============================================
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production'
+        ? [
+            'https://tackstracker.vercel.app',
+            'https://tackstracker-frontend.vercel.app',
+            process.env.FRONTEND_URL
+        ].filter(Boolean)
+        : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// Sentry request handler (must be first)
+if (process.env.SENTRY_DSN) {
+    app.use(Sentry.Handlers.requestHandler());
+}
+
+// ============================================
+// BASIC MIDDLEWARE
+// ============================================
 app.use(express.json());
+
+// Request logging
+app.use((req, res, next) => {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] ${req.method} ${req.url}`);
+    next();
+});
+
+// Apply rate limiting to API routes
+app.use('/api/', apiLimiter);
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -41,8 +143,27 @@ const authenticateToken = (req, res, next) => {
 // AUTHENTICATION ROUTES
 // ============================================
 
+// Health check endpoint
+app.get('/health', async (req, res) => {
+    try {
+        await runQuery('SELECT 1');
+        res.json({
+            status: 'healthy',
+            timestamp: new Date().toISOString(),
+            database: 'connected',
+            version: '1.0.0'
+        });
+    } catch (error) {
+        res.status(503).json({
+            status: 'unhealthy',
+            database: 'disconnected',
+            error: process.env.NODE_ENV === 'production' ? 'Database connection failed' : error.message
+        });
+    }
+});
+
 // Register new user
-app.post('/api/auth/register', async (req, res) => {
+app.post('/api/auth/register', authLimiter, validate(registerSchema), async (req, res) => {
     try {
         const { name, email, password, role = 'member' } = req.body;
 
@@ -77,7 +198,7 @@ app.post('/api/auth/register', async (req, res) => {
 });
 
 // Login user
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, validate(loginSchema), async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -139,7 +260,7 @@ app.get('/api/quarterly-goals', authenticateToken, async (req, res) => {
 });
 
 // Create quarterly goal
-app.post('/api/quarterly-goals', authenticateToken, async (req, res) => {
+app.post('/api/quarterly-goals', authenticateToken, validate(goalSchema), async (req, res) => {
     try {
         const { title, description, quarter, year } = req.body;
 
@@ -241,7 +362,7 @@ app.get('/api/monthly-plans', authenticateToken, async (req, res) => {
 });
 
 // Create monthly plan
-app.post('/api/monthly-plans', authenticateToken, async (req, res) => {
+app.post('/api/monthly-plans', authenticateToken, validate(planSchema), async (req, res) => {
     try {
         const { title, description, month, year, quarterly_goal_id } = req.body;
 
@@ -349,7 +470,7 @@ app.get('/api/weekly-tasks', authenticateToken, async (req, res) => {
 });
 
 // Create weekly task
-app.post('/api/weekly-tasks', authenticateToken, async (req, res) => {
+app.post('/api/weekly-tasks', authenticateToken, validate(taskSchema), async (req, res) => {
     try {
         const {
             title,
@@ -489,7 +610,7 @@ app.get('/api/time-logs', authenticateToken, async (req, res) => {
 });
 
 // Create time log
-app.post('/api/time-logs', authenticateToken, async (req, res) => {
+app.post('/api/time-logs', authenticateToken, validate(timeLogSchema), async (req, res) => {
     try {
         const { task_id, hours, date, notes } = req.body;
 
@@ -809,6 +930,39 @@ app.post('/api/seed', async (req, res) => {
 });
 
 // ============================================
+// ERROR HANDLING MIDDLEWARE
+// ============================================
+
+// Sentry error handler (must be before other error handlers)
+if (process.env.SENTRY_DSN) {
+    app.use(Sentry.Handlers.errorHandler());
+}
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Not Found',
+        message: `Route ${req.method} ${req.url} not found`
+    });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Error:', err.stack);
+
+    // Don't leak error details in production
+    const errorResponse = {
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'production'
+            ? 'An unexpected error occurred'
+            : err.message,
+        ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
+    };
+
+    res.status(err.status || 500).json(errorResponse);
+});
+
+// ============================================
 // SERVER START
 // ============================================
 
@@ -816,4 +970,6 @@ app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`✅ API ready at http://localhost:${PORT}/api`);
+    console.log(`🔒 Security: Helmet enabled, Rate limiting active`);
+    console.log(`📝 Validation: Input validation enabled`);
 });
