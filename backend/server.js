@@ -17,6 +17,7 @@ const {
     loginSchema,
     validate
 } = require('./middleware/validation');
+const aiRoutes = require('./routes/ai.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -161,6 +162,11 @@ app.get('/health', async (req, res) => {
         });
     }
 });
+
+// ============================================
+// AI ROUTES
+// ============================================
+app.use('/api/ai', aiRoutes);
 
 // Register new user
 app.post('/api/auth/register', authLimiter, validate(registerSchema), async (req, res) => {

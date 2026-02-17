@@ -5,6 +5,7 @@ import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 import Layout from './components/Layout/Layout';
+import AIChatWidget from './components/AI/AIChatWidget';
 import './styles.css';
 
 // Protected Route Component
@@ -53,6 +54,7 @@ function App() {
         <AuthProvider>
             <Router>
                 <AppRoutes />
+                <AIChatWidget />
             </Router>
         </AuthProvider>
     );
