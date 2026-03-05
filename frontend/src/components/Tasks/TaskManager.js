@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { tasksAPI, plansAPI, timeLogsAPI } from '../../services/api';
 import { Plus, Edit2, Trash2, CheckSquare, Clock, Link as LinkIcon } from 'lucide-react';
 import { format } from 'date-fns';
+import toast from 'react-hot-toast';
 
 function TaskManager({ onUpdate }) {
     const [tasks, setTasks] = useState([]);
@@ -85,12 +86,14 @@ function TaskManager({ onUpdate }) {
             fetchTasks();
             onUpdate?.();
             resetForm();
+            toast.success(editingTask ? 'Task updated successfully!' : 'Task created successfully!');
         } catch (error) {
             console.error('Error saving task:', error);
             const message = error.response?.data?.details
                 ? error.response.data.details.join(', ')
                 : error.response?.data?.error || 'Failed to save task. Please try again.';
             setFormError(message);
+            toast.error(message);
         } finally {
             setIsSubmitting(false);
         }
@@ -114,9 +117,10 @@ function TaskManager({ onUpdate }) {
                 date: format(new Date(), 'yyyy-MM-dd'),
                 notes: ''
             });
+            toast.success('Time logged successfully!');
         } catch (error) {
             console.error('Error logging time:', error);
-            alert(error.response?.data?.error || 'Failed to log time');
+            toast.error(error.response?.data?.error || 'Failed to log time');
         }
     };
 
@@ -127,8 +131,10 @@ function TaskManager({ onUpdate }) {
             await tasksAPI.delete(id);
             fetchTasks();
             onUpdate?.();
+            toast.success('Task deleted successfully!');
         } catch (error) {
             console.error('Error deleting task:', error);
+            toast.error('Failed to delete task');
         }
     };
 

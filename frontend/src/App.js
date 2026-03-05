@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard/Dashboard';
 import Layout from './components/Layout/Layout';
 import AIChatWidget from './components/AI/AIChatWidget';
 import ErrorBoundary from './components/ErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 import './styles.css';
 
 // Protected Route Component
@@ -57,6 +58,23 @@ function App() {
                 <ErrorBoundary>
                     <AppRoutes />
                     <AIChatWidget />
+                    <Toaster
+                        position="top-right"
+                        toastOptions={{
+                            duration: 3000,
+                            style: {
+                                borderRadius: '8px',
+                                background: '#333',
+                                color: '#fff',
+                            },
+                            success: {
+                                iconTheme: { primary: '#10b981', secondary: '#fff' },
+                            },
+                            error: {
+                                iconTheme: { primary: '#ef4444', secondary: '#fff' },
+                            },
+                        }}
+                    />
                 </ErrorBoundary>
             </Router>
         </AuthProvider>
