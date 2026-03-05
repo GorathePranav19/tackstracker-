@@ -27,14 +27,26 @@ const taskSchema = Joi.object({
     description: Joi.string().max(2000).allow('').trim(),
     week_number: Joi.number().integer().min(1).max(53).required(),
     year: Joi.number().integer().min(2020).max(2100).required(),
-    monthly_plan_id: Joi.number().integer().allow(null),
+    monthly_plan_id: Joi.alternatives().try(
+        Joi.number().integer(),
+        Joi.string().allow('', null)
+    ).allow(null),
     priority: Joi.string().valid('low', 'medium', 'high'),
     status: Joi.string().valid('pending', 'in_progress', 'completed', 'cancelled'),
     estimated_hours: Joi.number().min(0).max(1000),
     actual_hours: Joi.number().min(0).max(1000),
-    due_date: Joi.date().iso(),
-    is_urgent: Joi.boolean(),
-    depends_on: Joi.number().integer().allow(null)
+    due_date: Joi.alternatives().try(
+        Joi.date().iso(),
+        Joi.string().allow('', null)
+    ).allow(null),
+    is_urgent: Joi.alternatives().try(
+        Joi.boolean(),
+        Joi.number().integer().min(0).max(1)
+    ),
+    depends_on: Joi.alternatives().try(
+        Joi.number().integer(),
+        Joi.string().allow('', null)
+    ).allow(null)
 });
 
 // Time log validation schema

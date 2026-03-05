@@ -10,6 +10,8 @@ function TaskManager({ onUpdate }) {
     const [showTimeLog, setShowTimeLog] = useState(false);
     const [editingTask, setEditingTask] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formError, setFormError] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
     const [formData, setFormData] = useState({
         title: '',
@@ -56,13 +58,22 @@ function TaskManager({ onUpdate }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setFormError('');
+        setIsSubmitting(true);
 
         try {
             const dataToSend = {
-                ...formData,
-                monthly_plan_id: formData.monthly_plan_id || null,
-                depends_on: formData.depends_on || null,
-                is_urgent: formData.is_urgent ? 1 : 0
+                title: formData.title,
+                description: formData.description || '',
+                week_number: formData.week_number,
+                year: formData.year,
+                monthly_plan_id: formData.monthly_plan_id ? Number(formData.monthly_plan_id) : null,
+                priority: formData.priority,
+                status: formData.status,
+                estimated_hours: formData.estimated_hours,
+                due_date: formData.due_date || null,
+                is_urgent: formData.is_urgent ? true : false,
+                depends_on: formData.depends_on ? Number(formData.depends_on) : null
             };
 
             if (editingTask) {
@@ -76,7 +87,12 @@ function TaskManager({ onUpdate }) {
             resetForm();
         } catch (error) {
             console.error('Error saving task:', error);
-            alert(error.response?.data?.error || 'Failed to save task');
+            const message = error.response?.data?.details
+                ? error.response.data.details.join(', ')
+                : error.response?.data?.error || 'Failed to save task. Please try again.';
+            setFormError(message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -142,6 +158,7 @@ function TaskManager({ onUpdate }) {
     const resetForm = () => {
         setShowForm(false);
         setEditingTask(null);
+        setFormError('');
         setFormData({
             title: '',
             description: '',
@@ -351,12 +368,29 @@ function TaskManager({ onUpdate }) {
                                 </div>
                             </div>
 
+                            {formError && (
+                                <div className="form-error" style={{
+                                    background: '#fef2f2',
+                                    color: '#dc2626',
+                                    padding: '10px 14px',
+                                    borderRadius: '6px',
+                                    marginBottom: '12px',
+                                    fontSize: '14px',
+                                    border: '1px solid #fecaca'
+                                }}>
+                                    ⚠️ {formError}
+                                </div>
+                            )}
+
                             <div className="form-actions">
-                                <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                                <button type="button" className="btn btn-secondary" onClick={resetForm} disabled={isSubmitting}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn btn-primary">
-                                    {editingTask ? 'Update' : 'Create'} Task
+                                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                                    {isSubmitting
+                                        ? (editingTask ? 'Updating...' : 'Creating...')
+                                        : `${editingTask ? 'Update' : 'Create'} Task`
+                                    }
                                 </button>
                             </div>
                         </form>
