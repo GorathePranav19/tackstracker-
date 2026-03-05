@@ -1,7 +1,7 @@
 # Minimum Viable Product (MVP)
 ## TacksTracker - Team Goal & Task Tracker
 
-**Version:** 1.0.0  
+**Version:** 1.5.0  
 **Target Launch:** Q1 2026  
 **Status:** ✅ Completed  
 **Document Owner:** Product Team

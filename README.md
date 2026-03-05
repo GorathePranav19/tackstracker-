@@ -201,6 +201,9 @@ tackstracker/
 ├── PRD.md                         # Product Requirements Document
 ├── MVP.md                         # Minimum Viable Product definition
 ├── SYSTEM_DESIGN.md               # System architecture documentation
+├── KNOWN_ISSUES.md                # Known bugs and workarounds
+├── CHANGELOG.md                   # Version history and release notes
+├── DEMO_CREDENTIALS.md            # Demo accounts and walkthrough script
 ├── QUICK_START.md                 # Quick reference guide
 ├── WEEK1_SECURITY_IMPROVEMENTS.md # Security implementation details
 └── vercel.json                    # Vercel deployment config
@@ -564,8 +567,20 @@ MIT License - see LICENSE file for details
 - [Security Improvements](./WEEK1_SECURITY_IMPROVEMENTS.md)
 - [Quick Start Guide](./QUICK_START.md)
 
+## 📋 Known Issues
+
+See [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) for current bugs and workarounds.
+
+## 🔄 Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for version history and release notes.
+
+## 🔐 Demo Credentials
+
+See [DEMO_CREDENTIALS.md](./DEMO_CREDENTIALS.md) for demo accounts and presentation walkthrough.
+
 ---
 
 **Built with ❤️ by the TacksTracker Team**
 
-**Version:** 2.0.0 | **Status:** Production Ready ✅
+**Version:** 1.5.0 | **Status:** Production Ready ✅

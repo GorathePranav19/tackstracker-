@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 ## TacksTracker - Team Goal & Task Tracker
 
-**Version:** 2.0.0  
+**Version:** 1.5.0  
 **Last Updated:** March 2026  
 **Status:** Production Ready  
 **Document Owner:** Product Team
