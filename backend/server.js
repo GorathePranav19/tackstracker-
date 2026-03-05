@@ -274,15 +274,15 @@ app.get('/api/quarterly-goals', authenticateToken, async (req, res) => {
 // Create quarterly goal
 app.post('/api/quarterly-goals', authenticateToken, validate(goalSchema), async (req, res) => {
     try {
-        const { title, description, quarter, year } = req.body;
+        const { title, description, quarter, year, status, progress } = req.body;
 
         if (!title || !quarter || !year) {
             return res.status(400).json({ error: 'Title, quarter, and year are required' });
         }
 
         const result = await runQuery(
-            'INSERT INTO quarterly_goals (user_id, title, description, quarter, year) VALUES (?, ?, ?, ?, ?)',
-            [req.user.id, title, description, quarter, year]
+            'INSERT INTO quarterly_goals (user_id, title, description, quarter, year, status, progress) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [req.user.id, title, description, quarter, year, status || 'pending', progress || 0]
         );
 
         res.status(201).json({
@@ -376,15 +376,15 @@ app.get('/api/monthly-plans', authenticateToken, async (req, res) => {
 // Create monthly plan
 app.post('/api/monthly-plans', authenticateToken, validate(planSchema), async (req, res) => {
     try {
-        const { title, description, month, year, quarterly_goal_id } = req.body;
+        const { title, description, month, year, quarterly_goal_id, status, progress } = req.body;
 
         if (!title || !month || !year) {
             return res.status(400).json({ error: 'Title, month, and year are required' });
         }
 
         const result = await runQuery(
-            'INSERT INTO monthly_plans (user_id, quarterly_goal_id, title, description, month, year) VALUES (?, ?, ?, ?, ?, ?)',
-            [req.user.id, quarterly_goal_id || null, title, description, month, year]
+            'INSERT INTO monthly_plans (user_id, quarterly_goal_id, title, description, month, year, status, progress) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [req.user.id, quarterly_goal_id || null, title, description, month, year, status || 'pending', progress || 0]
         );
 
         res.status(201).json({

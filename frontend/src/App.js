@@ -5,7 +5,7 @@ import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 import Layout from './components/Layout/Layout';
-import AIChatWidget from './components/AI/AIChatWidget';
+// AI chatbot removed
 import ErrorBoundary from './components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
 import './styles.css';
@@ -57,7 +57,7 @@ function App() {
             <Router>
                 <ErrorBoundary>
                     <AppRoutes />
-                    <AIChatWidget />
+
                     <Toaster
                         position="top-right"
                         toastOptions={{
