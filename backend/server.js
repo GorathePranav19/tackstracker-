@@ -734,24 +734,24 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
             overdueTasksCount: 0
         };
 
-        // Get counts
+        // Get counts - use single quotes for string values (PostgreSQL)
         const goalCount = await getOne('SELECT COUNT(*) as count FROM quarterly_goals WHERE user_id = ?', [req.user.id]);
         const planCount = await getOne('SELECT COUNT(*) as count FROM monthly_plans WHERE user_id = ?', [req.user.id]);
         const taskCount = await getOne('SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ?', [req.user.id]);
-        const completedCount = await getOne('SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ? AND status = "completed"', [req.user.id]);
-        const pendingCount = await getOne('SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ? AND status = "pending"', [req.user.id]);
-        const inProgressCount = await getOne('SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ? AND status = "in_progress"', [req.user.id]);
-        const hoursSum = await getOne('SELECT SUM(hours) as total FROM time_logs WHERE user_id = ?', [req.user.id]);
-        const overdueCount = await getOne('SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ? AND due_date < date("now") AND status != "completed"', [req.user.id]);
+        const completedCount = await getOne("SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ? AND status = 'completed'", [req.user.id]);
+        const pendingCount = await getOne("SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ? AND status = 'pending'", [req.user.id]);
+        const inProgressCount = await getOne("SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ? AND status = 'in_progress'", [req.user.id]);
+        const hoursSum = await getOne('SELECT COALESCE(SUM(hours), 0) as total FROM time_logs WHERE user_id = ?', [req.user.id]);
+        const overdueCount = await getOne("SELECT COUNT(*) as count FROM weekly_tasks WHERE user_id = ? AND due_date < CURRENT_DATE AND status != 'completed'", [req.user.id]);
 
-        stats.totalGoals = goalCount.count;
-        stats.totalPlans = planCount.count;
-        stats.totalTasks = taskCount.count;
-        stats.completedTasks = completedCount.count;
-        stats.pendingTasks = pendingCount.count;
-        stats.inProgressTasks = inProgressCount.count;
-        stats.totalHoursLogged = hoursSum.total || 0;
-        stats.overdueTasksCount = overdueCount.count;
+        stats.totalGoals = parseInt(goalCount?.count) || 0;
+        stats.totalPlans = parseInt(planCount?.count) || 0;
+        stats.totalTasks = parseInt(taskCount?.count) || 0;
+        stats.completedTasks = parseInt(completedCount?.count) || 0;
+        stats.pendingTasks = parseInt(pendingCount?.count) || 0;
+        stats.inProgressTasks = parseInt(inProgressCount?.count) || 0;
+        stats.totalHoursLogged = parseFloat(hoursSum?.total) || 0;
+        stats.overdueTasksCount = parseInt(overdueCount?.count) || 0;
 
         res.json(stats);
     } catch (error) {
@@ -800,7 +800,7 @@ cron.schedule('0 9 * * *', async () => {
       SELECT wt.*, u.id as user_id, u.name as user_name
       FROM weekly_tasks wt
       JOIN users u ON wt.user_id = u.id
-      WHERE wt.due_date < date('now') AND wt.status != 'completed'
+      WHERE wt.due_date < CURRENT_DATE AND wt.status != 'completed'
     `);
 
         for (const task of overdueTasks) {
@@ -830,7 +830,7 @@ cron.schedule('0 18 * * *', async () => {
       SELECT wt.*, u.id as user_id, u.name as user_name
       FROM weekly_tasks wt
       JOIN users u ON wt.user_id = u.id
-      WHERE wt.due_date = date('now', '+1 day') AND wt.status != 'completed'
+      WHERE wt.due_date = CURRENT_DATE + INTERVAL '1 day' AND wt.status != 'completed'
     `);
 
         for (const task of dueTomorrowTasks) {
