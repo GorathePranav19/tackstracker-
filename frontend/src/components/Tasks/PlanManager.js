@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { plansAPI, goalsAPI } from '../../services/api';
 import { Plus, Edit2, Trash2, Calendar } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 function PlanManager({ onUpdate }) {
     const [plans, setPlans] = useState([]);
@@ -58,9 +59,10 @@ function PlanManager({ onUpdate }) {
             fetchPlans();
             onUpdate?.();
             resetForm();
+            toast.success(editingPlan ? 'Plan updated successfully!' : 'Plan created successfully!');
         } catch (error) {
             console.error('Error saving plan:', error);
-            alert(error.response?.data?.error || 'Failed to save plan');
+            toast.error(error.response?.data?.error || 'Failed to save plan');
         }
     };
 
@@ -71,8 +73,10 @@ function PlanManager({ onUpdate }) {
             await plansAPI.delete(id);
             fetchPlans();
             onUpdate?.();
+            toast.success('Plan deleted successfully!');
         } catch (error) {
             console.error('Error deleting plan:', error);
+            toast.error('Failed to delete plan');
         }
     };
 

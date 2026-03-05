@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { goalsAPI } from '../../services/api';
 import { Plus, Edit2, Trash2, Target } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 function GoalManager({ onUpdate }) {
     const [goals, setGoals] = useState([]);
@@ -41,9 +42,10 @@ function GoalManager({ onUpdate }) {
             fetchGoals();
             onUpdate?.();
             resetForm();
+            toast.success(editingGoal ? 'Goal updated successfully!' : 'Goal created successfully!');
         } catch (error) {
             console.error('Error saving goal:', error);
-            alert(error.response?.data?.error || 'Failed to save goal');
+            toast.error(error.response?.data?.error || 'Failed to save goal');
         }
     };
 
@@ -54,8 +56,10 @@ function GoalManager({ onUpdate }) {
             await goalsAPI.delete(id);
             fetchGoals();
             onUpdate?.();
+            toast.success('Goal deleted successfully!');
         } catch (error) {
             console.error('Error deleting goal:', error);
+            toast.error('Failed to delete goal');
         }
     };
 

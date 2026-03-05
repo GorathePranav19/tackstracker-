@@ -54,6 +54,7 @@ function Login() {
                             placeholder="you@example.com"
                             required
                             autoFocus
+                            autoComplete="email"
                         />
                     </div>
 
@@ -66,6 +67,7 @@ function Login() {
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
                             required
+                            autoComplete="current-password"
                         />
                     </div>
 
