@@ -52,9 +52,16 @@ class GroqService {
             };
         } catch (error) {
             console.error('Groq API error:', error.message);
+            // Sanitize error - never expose raw API errors to the client
+            let safeMessage = 'AI service is temporarily unavailable. Please try again later.';
+            if (error.status === 401 || error.message?.includes('API Key')) {
+                safeMessage = 'AI service configuration error. Please contact the administrator.';
+            } else if (error.status === 429 || error.message?.includes('rate')) {
+                safeMessage = 'AI service is busy. Please wait a moment and try again.';
+            }
             return {
                 success: false,
-                error: error.message
+                error: safeMessage
             };
         }
     }

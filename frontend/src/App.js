@@ -6,6 +6,7 @@ import Register from './components/Auth/Register';
 import Dashboard from './components/Dashboard/Dashboard';
 import Layout from './components/Layout/Layout';
 import AIChatWidget from './components/AI/AIChatWidget';
+import ErrorBoundary from './components/ErrorBoundary';
 import './styles.css';
 
 // Protected Route Component
@@ -53,8 +54,10 @@ function App() {
     return (
         <AuthProvider>
             <Router>
-                <AppRoutes />
-                <AIChatWidget />
+                <ErrorBoundary>
+                    <AppRoutes />
+                    <AIChatWidget />
+                </ErrorBoundary>
             </Router>
         </AuthProvider>
     );

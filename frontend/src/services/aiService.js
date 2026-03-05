@@ -35,7 +35,7 @@ class AIService {
             return await response.json();
         } catch (error) {
             console.error('AI query error:', error);
-            return { error: error.message };
+            return { error: 'AI assistant is temporarily unavailable. Please try again later.' };
         }
     }
 
